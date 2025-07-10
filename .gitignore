@@ -1,0 +1,28 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Optional: coverage reports
+coverage/
+
+# Optional: VS Code settings
+.vscode/
+
+# Optional: build files (if you're compiling or bundling)
+dist/
+build/
+
+# Optional: database files
+*.sqlite
+*.db
