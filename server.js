@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const logger = require("./utils/logger.js");
 
 class Server {
   constructor() {
@@ -14,6 +15,17 @@ class Server {
   }
 
   setupMiddleware() {
+    // Request Logger Middleware
+    this.app.use((req, res, next) => {
+      logger.info(`${req.originalUrl}`, `${req.method}`, {
+        ip: req.ip,
+        body: req?.body ?? {},
+        query: req?.query ?? {},
+        user: req?.user ?? {},
+      });
+      next();
+    });
+
     // CORS
     this.app.use(
       cors({
@@ -52,6 +64,23 @@ class Server {
         timestamp: new Date(),
       });
     });
+
+    // 404 handler
+    this.app.use((req, res) => {
+      res.status(404).json({
+        success: false,
+        message: "Endpoint not available",
+      });
+    });
+
+    // Unhandle Rejection
+    this.app.use((error, req, res, next) => {
+      logger.error(`Unhandle rejection`, "http", { errorMsg: error });
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    });
   }
 
   // Start Server
@@ -59,12 +88,18 @@ class Server {
     try {
       // Start Express Server
       this.app.listen(this.port, "0.0.0.0", () => {
-        console.log(`Server started on port ${this.port}`);
-        console.log(`Health check: http://localhost:${this.port}/health`);
-        console.log(`Base URL: http://localhost:${this.port}/api`);
+        logger.info(`Server started on port ${this.port}`, "http", {});
+        logger.info(
+          `Health check: http://localhost:${this.port}/health`,
+          "http",
+          {}
+        );
+        logger.info(`Base URL: http://localhost:${this.port}/api`, "http", {});
       });
     } catch (error) {
-      console.error("Failed to Start server: ", error.message);
+      logger.error("Failed to Start server :", "http", {
+        errorMsg: error.message,
+      });
       process.exit(1);
     }
   }
@@ -73,6 +108,8 @@ class Server {
 const server = new Server();
 
 server.start().catch((error) => {
-  console.log(`Failed to start server: ${error.message}`);
+  logger.error("Failed to Start server :", "http", {
+    errorMsg: error.message,
+  });
   process.exit(1);
 });
